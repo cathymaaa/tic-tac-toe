@@ -1,0 +1,403 @@
+#include "SPI.h" 
+#include "Adafruit_GFX.h" 
+#include "Adafruit_ILI9341.h"
+
+// Pin Definitions
+#define sclk 13
+#define mosi 11
+#define cs   10
+#define dc   8
+#define rst  5
+
+// Note Definitions
+#define NOTE_B0  31
+#define NOTE_C1  33
+#define NOTE_CS1 35
+#define NOTE_D1  37
+#define NOTE_DS1 39
+#define NOTE_E1  41
+#define NOTE_F1  44
+#define NOTE_FS1 46
+#define NOTE_G1  49
+#define NOTE_GS1 52
+#define NOTE_A1  55
+#define NOTE_AS1 58
+#define NOTE_B1  62
+#define NOTE_C2  65
+#define NOTE_CS2 69
+#define NOTE_D2  73
+#define NOTE_DS2 78
+#define NOTE_E2  82
+#define NOTE_F2  87
+#define NOTE_FS2 93
+#define NOTE_G2  98
+#define NOTE_GS2 104
+#define NOTE_A2  110
+#define NOTE_AS2 117
+#define NOTE_B2  123
+#define NOTE_C3  131
+#define NOTE_CS3 139
+#define NOTE_D3  147
+#define NOTE_DS3 156
+#define NOTE_E3  165
+#define NOTE_F3  175
+#define NOTE_FS3 185
+#define NOTE_G3  196
+#define NOTE_GS3 208
+#define NOTE_A3  220
+#define NOTE_AS3 233
+#define NOTE_B3  247
+#define NOTE_C4  262
+#define NOTE_CS4 277
+#define NOTE_D4  294
+#define NOTE_DS4 311
+#define NOTE_E4  330
+#define NOTE_F4  349
+#define NOTE_FS4 370
+#define NOTE_G4  392
+#define NOTE_GS4 415
+#define NOTE_A4  440
+#define NOTE_AS4 466
+#define NOTE_B4  494
+#define NOTE_C5  523
+#define NOTE_CS5 554
+#define NOTE_D5  587
+#define NOTE_DS5 622
+#define NOTE_E5  659
+#define NOTE_F5  698
+#define NOTE_FS5 740
+#define NOTE_G5  784
+#define NOTE_GS5 831
+#define NOTE_A5  880
+#define NOTE_AS5 932
+#define NOTE_B5  988
+#define NOTE_C6  1047
+#define NOTE_CS6 1109
+#define NOTE_D6  1175
+#define NOTE_DS6 1245
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_FS6 1480
+#define NOTE_G6  1568
+#define NOTE_GS6 1661
+#define NOTE_A6  1760
+#define NOTE_AS6 1865
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+#define NOTE_CS7 2217
+#define NOTE_D7  2349
+#define NOTE_DS7 2489
+#define NOTE_E7  2637
+#define NOTE_F7  2794
+#define NOTE_FS7 2960
+#define NOTE_G7  3136
+#define NOTE_GS7 3322
+#define NOTE_A7  3520
+#define NOTE_AS7 3729
+#define NOTE_B7  3951
+#define NOTE_C8  4186
+#define NOTE_CS8 4435
+#define NOTE_D8  4699
+#define NOTE_DS8 4978
+
+int step = 0;
+int AA;
+int AB;
+int AC;
+int BA;
+int BB;
+int BC;
+int CA;
+int CB;
+int CC;
+int xa = 70;
+int xb = 160;
+int xc = 250;
+int ya = 45;
+int yb = 120;
+int yc = 195;
+int stat1 = 0;
+int stat2 = 0;
+int stat3 = 0;
+
+// note durations: 4 = quarter note, 8 = eighth note, etc.
+int melody[] = { NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4 };
+int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("ILI9341 Test!");
+  
+  // initialize the TFT display
+  tft.begin();
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setRotation(1);
+
+  // display the title and names
+  tft.setCursor(0, 0);
+  tft.setTextColor(ILI9341_GREEN);
+  tft.setTextSize(3);
+  tft.println("Interaction Lab  Midterm Project");
+  tft.setCursor(0, 70);
+  tft.setTextColor(ILI9341_RED);
+  tft.setTextSize(4);
+  tft.println("Bill Que      Cathy Ma");
+  tft.setCursor(0, 160);
+  tft.setTextColor(ILI9341_MAGENTA);
+  tft.setTextSize(4);
+  tft.println("TIC TAC TOE!");
+
+  // draw the Tic Tac Toe board
+  tft.setCursor(120, 180);
+  tft.fillCircle(80, 250, 10, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 15, ILI9341_MAGENTA);
+  tft.drawCircle(80, 250, 16, ILI9341_MAGENTA);
+  tft.drawCircle(80, 250, 21, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 20, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 23, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 24, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 27, ILI9341_GREEN);
+  tft.drawCircle(80, 250, 28, ILI9341_GREEN);
+  tft.drawCircle(80, 250, 31, ILI9341_YELLOW);
+  tft.drawCircle(80, 250, 32, ILI9341_YELLOW);
+  tft.drawCircle(80, 250, 35, ILI9341_RED);
+  tft.drawCircle(80, 250, 36, ILI9341_RED);
+  tft.drawCircle(80, 250, 37, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 38, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 39, ILI9341_GREEN);
+  tft.drawCircle(80, 250, 40, ILI9341_GREEN);
+  tft.drawCircle(80, 250, 41, ILI9341_YELLOW);
+  tft.drawCircle(80, 250, 42, ILI9341_YELLOW);
+  tft.drawCircle(80, 250, 43, ILI9341_RED);
+  tft.drawCircle(80, 250, 44, ILI9341_RED);
+  tft.drawCircle(80, 250, 45, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 46, ILI9341_MAGENTA);
+  tft.drawCircle(80, 250, 47, ILI9341_MAGENTA);
+  tft.drawCircle(80, 250, 48, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 49, ILI9341_WHITE);
+  tft.drawCircle(80, 250, 50, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 51, ILI9341_BLUE);
+  tft.drawCircle(80, 250, 52, ILI9341_GREEN);
+  tft.drawCircle(80, 250, 53, ILI9341_GREEN);
+
+  delay(1000);
+  tft.fillScreen(ILI9341_BLACK);
+  
+  unsigned long start = micros();
+  
+  tft.setCursor(0, 0);
+  tft.setTextColor(ILI9341_BLUE);
+  tft.setTextSize(2);
+  tft.println("YOU'RE BLUE!");
+  
+  tft.drawLine(113, 10, 113, 230, ILI9341_WHITE);
+  tft.drawLine(208, 10, 208, 230, ILI9341_WHITE);
+  tft.drawLine(30, 80, 290, 80, ILI9341_WHITE);
+  tft.drawLine(30, 160, 290, 160, ILI9341_WHITE);
+}
+
+void loop() {
+  int svalAA = analogRead(A0);
+  int svalAB = analogRead(A4);
+  int svalAC = analogRead(A8);
+  int svalBA = analogRead(A1);
+  int svalBB = analogRead(A5);
+  int svalBC = analogRead(A9);
+  int svalCA = analogRead(A2);
+  int svalCB = analogRead(A6);
+  int svalCC = analogRead(A10);
+  
+  Serial.print("AA:");
+  Serial.println(AA);
+  Serial.print("AB:");
+  Serial.println(AB);
+  Serial.print("AC:");
+  Serial.println(AC);
+  Serial.print("BA:");
+  Serial.println(BA);
+  Serial.print("BB:");
+  Serial.println(BB);
+  Serial.print("BC:");
+  Serial.println(BC);  
+  Serial.print("CA:");  
+  Serial.println(BA);  
+  Serial.print("CB:");  
+  Serial.println(BB);  
+  Serial.print("CC:");  
+  Serial.println(CC);
+  Serial.println(svalBA);  
+  tft.fillRect(0,32,11,32,ILI9341_BLACK);  
+  tft.setCursor(0, 32);  
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(2);  
+  tft.print(step);
+
+  // initialize step variable
+if (step == 0) {
+  // delay for 1000ms
+  delay(1000);
+  // draw a red circle on TFT display
+  tft.fillCircle(250, 45, 25, ILI9341_RED);
+  // set AC variable to 2
+  AC = 2;
+  // increment step variable by 1
+  step += 1;
+}
+
+// delay for 100ms
+delay(100);
+
+// check if svalAA is less than 18 and AA variable is 0
+if ((svalAA < 18) && (AA == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(70, 45, 25, ILI9341_BLUE);
+  // set AA variable to 1
+  AA = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalAB is less than 413 and AB variable is 0
+if ((svalAB < 413) && (AB == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(160, 45, 25, ILI9341_BLUE);
+  // set AB variable to 1
+  AB = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalAC is less than 429 and AC variable is 0
+if ((svalAC < 429) && (AC == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(250, 45, 25, ILI9341_BLUE);
+  // set AC variable to 1
+  AC = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalBA is less than 14 and BA variable is 0
+if ((svalBA < 14) && (BA == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(70, 120, 25, ILI9341_BLUE);
+  // set BA variable to 1
+  BA = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalBB is less than 485 and BB variable is 0
+if ((svalBB < 485) && (BB == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(160, 120, 25, ILI9341_BLUE);
+  // set BB variable to 1
+  BB = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalBC is less than 483 and BC variable is 0
+if ((svalBC < 483) && (BC == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(250, 120, 25, ILI9341_BLUE);
+  // set BC variable to 1
+  BC = 1;
+  // increment step variable by 1
+  step += 1;
+}
+
+// check if svalCA is less than 489 and CA variable is 0
+if ((svalCA < 489) && (CA == 0)) {
+  // draw a blue circle on TFT display
+  tft.fillCircle(70, 195, 25, ILI9341_BLUE);
+  // set CA variable to 1
+  CA = 1;
+  step += 1;
+}
+
+if ((svalCC<430)&&(CC==0)){    
+tft.fillCircle(250, 195, 25, ILI9341_BLUE);    
+CC=1;    
+step+=1;  
+}
+
+//algorithm start now  
+if ((step==2)&&(CC==0)){     
+   delay(2000);     
+  step+=1;     
+  tft.fillCircle(xc, yc, 25, ILI9341_RED);     
+  CC=2;     
+  stat3=1;     }   
+else if ((step==2)&&(AA==0)){     
+  delay(2000);     
+  step+=1;     
+  tft.fillCircle(xa, ya, 25, ILI9341_RED);     
+  AA=2;     
+  stat3=2;     
+}
+
+if (step == 4 && CA == 0) {
+  delay(2000);
+  step += 1;
+  tft.fillCircle(xa, yc, 25, ILI9341_RED);
+  CA = 2;
+  stat1 = 1;
+}
+
+if ((step==6)&&(BA==0)&&(stat1==1)){
+delay(2000);
+step+=1;
+tft.fillCircle(xa, yb, 25, ILI9341_RED);
+BA=2;
+}
+
+else if (step == 6 && BA == 0 && stat1 == 1) {
+  delay(2000);
+  step += 1;
+  tft.fillCircle(xa, yb, 25, ILI9341_RED);
+  BA = 2;
+} else if (step == 6 && BB == 0 && stat1 == 1) {
+  delay(2000);
+  step += 1;
+  tft.fillCircle(xb, yb, 25, ILI9341_RED);
+  BB = 2;
+}
+
+else if ((step==6)&&(BB==0)&&(stat1==1)){   
+delay(2000);   
+step+=1;   
+tft.fillCircle(xb, yb, 25, ILI9341_RED);   
+BB=2;   }
+
+else if ((step==6)&&(AB==0)&&(stat1==1)){   
+delay(2000);   
+step+=1;   
+tft.fillCircle(xb, ya, 25, ILI9341_RED);   
+AB=2;   }
+
+else if ((step==6)&&(BA==0)&&(stat1==1)){   
+delay(2000);   
+step+=1;   
+tft.fillCircle(xa, yb, 25, ILI9341_RED);   
+BA=2;   }
+
+else if ((step==6)&&(CB==0)&&(stat1==1)){   
+delay(2000);   
+step+=1;   
+tft.fillCircle(xb, yc, 25, ILI9341_RED);   
+CB=2;   }
+
+else if ((step==6)&&(BC==0)&&(stat1==1)){   
+delay(2000);   
+step+=1;   
+tft.fillCircle(xc, yb, 25, ILI9341_RED);   
+BC=2;   }
+
+if (((AA==1)&&(AB==1)&&(AC==1))||((BA==1)&&(BB==1)&&(BC==1))||((CA==1)&&(CB==1)&&(CC==1))||((AA==1)&&(BA==1)&&(CA==1))||((AB==1)&&(BB==1)&&(CB==1))||((AC==1)&&(BC==1)&&(CC==1))||((AA==1)&&(BB==1)&&(CC==1))||((CA==1)&&(BB==1)&&(AC==1))){      delay(1500);  tft.fillScreen(ILI9341_BLUE);  tft.setCursor(0, 70);  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(4);  tft.println("You WIN!");  tft.setTextSize(2);  tft.println(" ");  tft.setTextSize(4);  tft.println("Congratulations!");    delay (5000);  tft.fillScreen(ILI9341_GREENYELLOW);  tft.setCursor(0, 45);  tft.setTextColor(ILI9341_BLACK);  tft.setTextSize(4);    tft.println("Tic Toc Toe");    tft.setTextSize(3);    tft.println(" ");    tft.println("Presented By");    tft.setTextSize(1);    tft.println(" ");    tft.setTextColor(ILI9341_RED);    tft.setTextSize(4);    tft.println("Bill Que     Cathy Ma");    delay(500000);   }
+
+else if (((AA==2)&&(AB==2)&&(AC==2))||((BA==2)&&(BB==2)&&(BC==2))||((CA==2)&&(CB==2)&&(CC==2))||((AA==2)&&(BA==2)&&(CA==2))||((AB==2)&&(BB==2)&&(CB==2))||((AC==2)&&(BC==2)&&(CC==2))||((AA==2)&&(BB==2)&&(CC==2))||((CA==2)&&(BB==2)&&(AC==2))){      delay(1500);  tft.fillScreen(ILI9341_RED);  tft.setCursor(0, 70);  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(4);  tft.println("You LOSE!");  tft.setTextSize(2);  tft.println(" ");  tft.setTextSize(4);  tft.println("Feel Free to Try Again!");  delay (5000);  tft.fillScreen(ILI9341_GREENYELLOW);  tft.setCursor(0, 45);  tft.setTextColor(ILI9341_BLACK);  tft.setTextSize(4);    tft.println("Tic Toc Toe");    tft.setTextSize(3);    tft.println(" ");    tft.println("Presented By");    tft.setTextSize(1);    tft.println(" ");    tft.setTextColor(ILI9341_RED);    tft.setTextSize(4);    tft.println("Bill Que     Cathy Ma");    delay(500000);   }
+
+else if ((AA!=0)&&(AB!=0)&&(AC!=0)&&(BA!=0)&&(BB!=0)&&(BC!=0)&&(CA!=0)&&(CB!=0)&&(CC!=0)){  tft.fillScreen(ILI9341_GREEN);  tft.setCursor(0, 70);  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(4);  tft.println("You TIED!");  tft.setTextSize(2);  tft.println(" ");  tft.setTextSize(4);  tft.println("Feel Free to Try Again!");     delay (5000);  tft.fillScreen(ILI9341_GREENYELLOW);  tft.setCursor(0, 45);  tft.setTextColor(ILI9341_BLACK);  tft.setTextSize(4);    tft.println("Tic Toc Toe");    tft.setTextSize(3);    tft.println(" ");    tft.println("Presented By");    tft.setTextSize(1);    tft.println(" ");    tft.setTextColor(ILI9341_RED);    tft.setTextSize(4);    tft.println("Bill Que     Cathy Ma");    delay(500000);}
+
+int ran1=random(1, 9);  if (step%2==0) {    delay(2000);  if (ran1==1 and AA==0){     tft.fillCircle(70, 45, 25, ILI9341_RED);     AA=2;  }  else if (ran1==2 and AB==0){     tft.fillCircle(160, 45, 25, ILI9341_RED);     AB=2;  }  else if (ran1==3 and AC==0){     tft.fillCircle(250, 45, 25, ILI9341_RED);     AC=2;  }  else if (ran1==4 and BA==0){     tft.fillCircle(70, 120, 25, ILI9341_RED);     BA=2;  }  else if (ran1==5 and BB==0){     tft.fillCircle(160, 120, 25, ILI9341_RED);     BB=2;  }  else if (ran1==6 and BC==0){     tft.fillCircle(250, 120, 25, ILI9341_RED);     BC=2;  }  else if (ran1==7 and CA==0){     tft.fillCircle(70, 195, 25, ILI9341_RED);     CA=2;  }  else if (ran1==8 and CB==0){     tft.fillCircle(160, 195, 25, ILI9341_RED);     CB=2;  }  else if (ran1==9 and CC==0){     tft.fillCircle(250, 195, 25, ILI9341_RED);     CC=2;  }  }     }
